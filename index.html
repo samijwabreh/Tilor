@@ -1,0 +1,1813 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="description" content="برنامج إدارة مشغل الخياطة - يعمل بدون إنترنت">
+    <meta name="theme-color" content="#1976d2">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="مشغل الخياطة">
+    
+    <title>برنامج إدارة مشغل الخياطة</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- أيقونات -->
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-192x192.png">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+    
+    <!-- CSS مدمج -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-color: #1976d2;
+            --secondary-color: #42a5f5;
+            --accent-color: #ff8e3c;
+            --background-color: #FAD4C0;
+            --surface-color: #FDE2D2;
+            --text-color: #333;
+            --text-light: #666;
+            --border-color: #ddd;
+            --success-color: #4caf50;
+            --warning-color: #ff9800;
+            --error-color: #f44336;
+            --shadow: 0 2px 10px rgba(0,0,0,0.1);
+            --border-radius: 8px;
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--background-color), var(--surface-color));
+            color: var(--text-color);
+            line-height: 1.6;
+            direction: rtl;
+            text-align: right;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* شاشة التحميل */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            color: white;
+        }
+
+        .loading-content {
+            text-align: center;
+            max-width: 300px;
+            padding: 2rem;
+        }
+
+        .loading-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 2px;
+            margin-top: 1rem;
+            overflow: hidden;
+        }
+
+        .loading-progress {
+            height: 100%;
+            background: white;
+            border-radius: 2px;
+            width: 0%;
+            animation: loading 3s ease-in-out;
+        }
+
+        @keyframes loading {
+            0% { width: 0%; }
+            50% { width: 70%; }
+            100% { width: 100%; }
+        }
+
+        /* التطبيق الرئيسي */
+        .app {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* شريط التنقل العلوي */
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 1rem;
+            box-shadow: var(--shadow);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .nav-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 0.5rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .nav-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* المحتوى الرئيسي */
+        .main-content {
+            flex: 1;
+            margin-top: 80px;
+            margin-bottom: 80px;
+            padding: 1rem;
+            max-width: 1200px;
+            margin-left: auto;
+            margin-right: auto;
+            width: 100%;
+        }
+
+        /* الصفحات */
+        .page {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding: 2rem;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        .page-header h1 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        /* صفحة تسجيل الدخول */
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: calc(100vh - 160px);
+            padding: 1rem;
+        }
+
+        .login-card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .login-logo {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .login-logo i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .login-form {
+            padding: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+        }
+
+        .login-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(25, 118, 210, 0.3);
+        }
+
+        .app-info {
+            display: flex;
+            justify-content: space-around;
+            padding: 1rem 2rem;
+            background: #f8f9fa;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .feature {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+
+        .feature i {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+        }
+
+        /* الإحصائيات */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            text-align: center;
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        /* البطاقات */
+        .card {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-header h2 {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+        }
+
+        /* الأزرار */
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: var(--transition);
+            text-align: center;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+        }
+
+        .btn-success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        /* الإجراءات السريعة */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        /* شريط التنقل السفلي */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            padding: 0.5rem 0;
+            z-index: 1000;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0.5rem;
+            background: none;
+            border: none;
+            color: var(--text-light);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .nav-item.active,
+        .nav-item:hover {
+            color: var(--primary-color);
+        }
+
+        .nav-item i {
+            font-size: 1.2rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .nav-item span {
+            font-size: 0.75rem;
+        }
+
+        /* النوافذ المنبثقة */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            padding: 1rem;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-light);
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* رسائل التنبيه */
+        .toast {
+            position: fixed;
+            top: 100px;
+            left: 1rem;
+            right: 1rem;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            z-index: 9999;
+            transform: translateY(-100px);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .toast.error {
+            background: var(--error-color);
+            color: white;
+        }
+
+        .toast.warning {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        /* قوائم البيانات */
+        .orders-list,
+        .services-list {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .order-item,
+        .service-item {
+            background: white;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .item-title {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .item-status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        /* تصميم متجاوب */
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .quick-actions {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .main-content {
+                padding: 0.5rem;
+            }
+
+            .page-header {
+                padding: 1rem;
+            }
+
+            .modal-content {
+                margin: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+
+    <!-- Font Awesome للأيقونات -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- شاشة التحميل -->
+    <div class="loading-screen" id="loading-screen">
+        <div class="loading-content">
+            <i class="fas fa-cut loading-icon"></i>
+            <h1>مشغل الخياطة</h1>
+            <p>جاري التحميل...</p>
+            <div class="loading-bar">
+                <div class="loading-progress" id="loading-progress"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- التطبيق الرئيسي -->
+    <div class="app" id="app" style="display: none;">
+        <!-- شريط التنقل العلوي -->
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-brand">
+                    <i class="fas fa-cut"></i>
+                    <span>مشغل الخياطة</span>
+                </div>
+                
+                <div class="nav-actions">
+                    <button class="nav-btn" onclick="showInstallPrompt()" id="install-btn" style="display: none;">
+                        <i class="fas fa-download"></i>
+                    </button>
+                    <button class="nav-btn" onclick="toggleMenu()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- المحتوى الرئيسي -->
+        <main class="main-content">
+            <!-- صفحة تسجيل الدخول -->
+            <div class="page" id="login-page">
+                <div class="login-container">
+                    <div class="login-card">
+                        <div class="login-logo">
+                            <i class="fas fa-cut"></i>
+                            <h1>مشغل الخياطة</h1>
+                            <p>برنامج إدارة مشغل الخياطة</p>
+                            <p style="font-size: 12px; color: #666; margin-top: 10px;">
+                                صاحب المخطية: <strong>صهيب جوابرة</strong><br>
+                                المصمم والمطور: <strong>سامي جوابرة</strong>
+                            </p>
+                        </div>
+
+                        <form class="login-form" id="login-form">
+                            <div class="form-group">
+                                <label for="username">
+                                    <i class="fas fa-user"></i>
+                                    اسم المستخدم
+                                </label>
+                                <input type="text" id="username" value="admin" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="password">
+                                    <i class="fas fa-lock"></i>
+                                    كلمة المرور
+                                </label>
+                                <input type="password" id="password" value="1234" required>
+                            </div>
+
+                            <button type="submit" class="login-btn">
+                                <i class="fas fa-sign-in-alt"></i>
+                                تسجيل الدخول
+                            </button>
+                        </form>
+
+                        <div class="app-info">
+                            <div class="feature">
+                                <i class="fas fa-wifi-slash"></i>
+                                <span>يعمل بدون إنترنت</span>
+                            </div>
+                            <div class="feature">
+                                <i class="fas fa-mobile-alt"></i>
+                                <span>متوافق مع الجوال</span>
+                            </div>
+                            <div class="feature">
+                                <i class="fas fa-download"></i>
+                                <span>قابل للتثبيت</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- صفحة لوحة التحكم -->
+            <div class="page" id="dashboard-page" style="display: none;">
+                <div class="page-header">
+                    <h1><i class="fas fa-home"></i> لوحة التحكم</h1>
+                    <p>مرحباً بك في برنامج إدارة مشغل الخياطة</p>
+                </div>
+
+                <!-- الإحصائيات -->
+                <div class="stats-grid">
+                    <div class="stat-card" style="background: linear-gradient(135deg, #4caf50, #45a049);">
+                        <div class="stat-icon" style="color: white;">
+                            <i class="fas fa-cash-register"></i>
+                        </div>
+                        <div class="stat-value" id="cashbox-amount" style="color: white;">0 شيكل</div>
+                        <div class="stat-label" style="color: white;">💰 رصيد الصندوق</div>
+                    </div>
+
+                    <div class="stat-card" onclick="showPage('orders-page')">
+                        <div class="stat-icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <div class="stat-value" id="total-orders">0</div>
+                        <div class="stat-label">إجمالي الطلبات</div>
+                    </div>
+
+                    <div class="stat-card" onclick="showPage('services-page')">
+                        <div class="stat-icon">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <div class="stat-value" id="total-services">0</div>
+                        <div class="stat-label">الخدمات المتاحة</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div class="stat-value" id="total-revenue">0</div>
+                        <div class="stat-label">إجمالي الإيرادات</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-money-check"></i>
+                        </div>
+                        <div class="stat-value" id="total-paid">0</div>
+                        <div class="stat-label">إجمالي المدفوع</div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                        <div class="stat-value" id="pending-amount">0</div>
+                        <div class="stat-label">المبالغ المعلقة</div>
+                    </div>
+                </div>
+
+                <!-- الإجراءات السريعة -->
+                <div class="card">
+                    <div class="card-header">
+                        <h2><i class="fas fa-bolt"></i> الإجراءات السريعة</h2>
+                    </div>
+                    <div class="quick-actions">
+                        <button class="btn btn-primary" onclick="showAddOrderModal()">
+                            <i class="fas fa-plus"></i>
+                            طلب جديد
+                        </button>
+                        <button class="btn btn-success" onclick="showPage('services-page')">
+                            <i class="fas fa-cogs"></i>
+                            إدارة الخدمات
+                        </button>
+                        <button class="btn btn-warning" onclick="showPage('expenses-page')">
+                            <i class="fas fa-money-bill"></i>
+                            المصاريف
+                        </button>
+                        <button class="btn btn-secondary" onclick="showPage('measurements-page')">
+                            <i class="fas fa-ruler"></i>
+                            القياسات
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- صفحة الطلبات -->
+            <div class="page" id="orders-page" style="display: none;">
+                <div class="page-header">
+                    <h1><i class="fas fa-shopping-cart"></i> إدارة الطلبات</h1>
+                    <button class="btn btn-primary" onclick="showAddOrderModal()">
+                        <i class="fas fa-plus"></i>
+                        طلب جديد
+                    </button>
+                </div>
+
+                <div class="orders-list" id="orders-list">
+                    <!-- سيتم ملؤها بـ JavaScript -->
+                </div>
+            </div>
+
+            <!-- صفحة الخدمات -->
+            <div class="page" id="services-page" style="display: none;">
+                <div class="page-header">
+                    <h1><i class="fas fa-cogs"></i> إدارة الخدمات</h1>
+                    <button class="btn btn-primary" onclick="showAddServiceModal()">
+                        <i class="fas fa-plus"></i>
+                        خدمة جديدة
+                    </button>
+                </div>
+
+                <div class="services-list" id="services-list">
+                    <!-- سيتم ملؤها بـ JavaScript -->
+                </div>
+            </div>
+
+            <!-- صفحة المصاريف -->
+            <div class="page" id="expenses-page" style="display: none;">
+                <div class="page-header">
+                    <h1><i class="fas fa-money-bill"></i> إدارة المصاريف</h1>
+                    <button class="btn btn-primary" onclick="showAddExpenseModal()">
+                        <i class="fas fa-plus"></i>
+                        مصروف جديد
+                    </button>
+                </div>
+
+                <div class="expenses-list" id="expenses-list">
+                    <!-- سيتم ملؤها بـ JavaScript -->
+                </div>
+            </div>
+
+            <!-- صفحة القياسات -->
+            <div class="page" id="measurements-page" style="display: none;">
+                <div class="page-header">
+                    <h1><i class="fas fa-ruler"></i> قياسات العملاء</h1>
+                    <button class="btn btn-primary" onclick="showAddMeasurementModal()">
+                        <i class="fas fa-plus"></i>
+                        عميل جديد
+                    </button>
+                </div>
+
+                <div class="measurements-list" id="measurements-list">
+                    <!-- سيتم ملؤها بـ JavaScript -->
+                </div>
+            </div>
+        </main>
+
+        <!-- شريط التنقل السفلي -->
+        <nav class="bottom-nav">
+            <button class="nav-item" onclick="showPage('dashboard-page')" data-page="dashboard-page">
+                <i class="fas fa-home"></i>
+                <span>الرئيسية</span>
+            </button>
+            <button class="nav-item" onclick="showPage('orders-page')" data-page="orders-page">
+                <i class="fas fa-shopping-cart"></i>
+                <span>الطلبات</span>
+            </button>
+            <button class="nav-item" onclick="showPage('services-page')" data-page="services-page">
+                <i class="fas fa-cogs"></i>
+                <span>الخدمات</span>
+            </button>
+            <button class="nav-item" onclick="logout()">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>خروج</span>
+            </button>
+        </nav>
+    </div>
+
+    <!-- نافذة إضافة طلب -->
+    <div class="modal" id="add-order-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>إضافة طلب جديد</h3>
+                <button class="modal-close" onclick="hideModal('add-order-modal')">&times;</button>
+            </div>
+            <form class="modal-body" id="order-form">
+                <div class="form-group">
+                    <label>اسم العميل:</label>
+                    <input type="text" id="order-customer" required>
+                </div>
+                <div class="form-group">
+                    <label>الخدمة:</label>
+                    <select id="order-service" required>
+                        <option value="">اختر الخدمة</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>السعر:</label>
+                    <input type="number" id="order-price" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>المبلغ المدفوع:</label>
+                    <input type="number" id="order-paid" step="0.01" value="0">
+                </div>
+                <div class="form-group">
+                    <label>ملاحظات:</label>
+                    <textarea id="order-notes"></textarea>
+                </div>
+            </form>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="hideModal('add-order-modal')">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="addOrder()">إضافة الطلب</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة إضافة خدمة -->
+    <div class="modal" id="add-service-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>إضافة خدمة جديدة</h3>
+                <button class="modal-close" onclick="hideModal('add-service-modal')">&times;</button>
+            </div>
+            <form class="modal-body" id="service-form">
+                <div class="form-group">
+                    <label>اسم الخدمة:</label>
+                    <input type="text" id="service-name" required>
+                </div>
+                <div class="form-group">
+                    <label>السعر:</label>
+                    <input type="number" id="service-price" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>الوصف:</label>
+                    <textarea id="service-description"></textarea>
+                </div>
+            </form>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="hideModal('add-service-modal')">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="addService()">إضافة الخدمة</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة إضافة مصروف -->
+    <div class="modal" id="add-expense-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>إضافة مصروف جديد</h3>
+                <button class="modal-close" onclick="hideModal('add-expense-modal')">&times;</button>
+            </div>
+            <form class="modal-body" id="expense-form">
+                <div class="form-group">
+                    <label>التصنيف:</label>
+                    <select id="expense-category" required>
+                        <option value="">اختر التصنيف</option>
+                        <option value="administrative">إداري</option>
+                        <option value="operational">تشغيلي</option>
+                        <option value="personal">شخصي</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>الوصف:</label>
+                    <input type="text" id="expense-description" required>
+                </div>
+                <div class="form-group">
+                    <label>المبلغ:</label>
+                    <input type="number" id="expense-amount" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>التاريخ:</label>
+                    <input type="date" id="expense-date" required>
+                </div>
+            </form>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="hideModal('add-expense-modal')">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="addExpense()">إضافة المصروف</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- نافذة إضافة قياسات عميل -->
+    <div class="modal" id="add-measurement-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>إضافة عميل جديد</h3>
+                <button class="modal-close" onclick="hideModal('add-measurement-modal')">&times;</button>
+            </div>
+            <form class="modal-body" id="measurement-form">
+                <div class="form-group">
+                    <label>اسم العميل:</label>
+                    <input type="text" id="measurement-customer" required>
+                </div>
+                <div class="form-group">
+                    <label>رقم الهاتف:</label>
+                    <input type="tel" id="measurement-phone">
+                </div>
+
+                <h4 style="color: var(--primary-color); margin: 20px 0 10px 0;">القياسات:</h4>
+
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                    <div class="form-group">
+                        <label>الطول:</label>
+                        <input type="text" id="measurement-height">
+                    </div>
+                    <div class="form-group">
+                        <label>الوزن:</label>
+                        <input type="text" id="measurement-weight">
+                    </div>
+                    <div class="form-group">
+                        <label>الكتف:</label>
+                        <input type="text" id="measurement-shoulder">
+                    </div>
+                    <div class="form-group">
+                        <label>الصدر:</label>
+                        <input type="text" id="measurement-chest">
+                    </div>
+                    <div class="form-group">
+                        <label>الخصر:</label>
+                        <input type="text" id="measurement-waist">
+                    </div>
+                    <div class="form-group">
+                        <label>الورك:</label>
+                        <input type="text" id="measurement-hip">
+                    </div>
+                    <div class="form-group">
+                        <label>طول الكم:</label>
+                        <input type="text" id="measurement-sleeve">
+                    </div>
+                    <div class="form-group">
+                        <label>طول البنطلون:</label>
+                        <input type="text" id="measurement-pants">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>ملاحظات:</label>
+                    <textarea id="measurement-notes" rows="3"></textarea>
+                </div>
+            </form>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="hideModal('add-measurement-modal')">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="addMeasurement()">حفظ العميل</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- رسائل التنبيه -->
+    <div class="toast" id="toast"></div>
+
+    <!-- JavaScript مدمج -->
+    <script>
+        // برنامج إدارة مشغل الخياطة - تطبيق مستقل
+        // تصميم وبرمجة: سامي جوابرة
+
+        // متغيرات عامة
+        let currentPage = 'login-page';
+        let isLoggedIn = false;
+        let deferredPrompt;
+        let orders = [];
+        let services = [];
+        let expenses = [];
+        let measurements = [];
+
+        // تهيئة التطبيق
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        // تهيئة التطبيق
+        function initializeApp() {
+            console.log('🚀 تهيئة تطبيق مشغل الخياطة...');
+
+            // إظهار شاشة التحميل
+            showLoadingScreen();
+
+            // تهيئة البيانات المحلية
+            initializeLocalData();
+
+            // إعداد مستمعي الأحداث
+            setupEventListeners();
+
+            // إعداد PWA
+            setupPWA();
+
+            // إخفاء شاشة التحميل بعد 3 ثوان
+            setTimeout(() => {
+                hideLoadingScreen();
+                checkLoginStatus();
+            }, 3000);
+
+            console.log('✅ تم تهيئة التطبيق بنجاح');
+        }
+
+        // إظهار شاشة التحميل
+        function showLoadingScreen() {
+            const loadingScreen = document.getElementById('loading-screen');
+            const app = document.getElementById('app');
+
+            loadingScreen.style.display = 'flex';
+            app.style.display = 'none';
+        }
+
+        // إخفاء شاشة التحميل
+        function hideLoadingScreen() {
+            const loadingScreen = document.getElementById('loading-screen');
+            const app = document.getElementById('app');
+
+            loadingScreen.style.display = 'none';
+            app.style.display = 'flex';
+        }
+
+        // إعداد مستمعي الأحداث
+        function setupEventListeners() {
+            // نموذج تسجيل الدخول
+            const loginForm = document.getElementById('login-form');
+            if (loginForm) {
+                loginForm.addEventListener('submit', handleLogin);
+            }
+
+            // تحديث الإحصائيات عند تغيير البيانات
+            window.addEventListener('dataChanged', updateDashboard);
+        }
+
+        // إعداد PWA
+        function setupPWA() {
+            // مراقبة حدث beforeinstallprompt
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                showInstallButton();
+            });
+
+            // مراقبة تثبيت التطبيق
+            window.addEventListener('appinstalled', () => {
+                console.log('✅ تم تثبيت PWA بنجاح');
+                hideInstallButton();
+                showToast('تم تثبيت التطبيق بنجاح!', 'success');
+            });
+        }
+
+        // إظهار زر التثبيت
+        function showInstallButton() {
+            const installBtn = document.getElementById('install-btn');
+            if (installBtn) {
+                installBtn.style.display = 'block';
+            }
+        }
+
+        // إخفاء زر التثبيت
+        function hideInstallButton() {
+            const installBtn = document.getElementById('install-btn');
+            if (installBtn) {
+                installBtn.style.display = 'none';
+            }
+        }
+
+        // إظهار مطالبة التثبيت
+        async function showInstallPrompt() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+
+                if (outcome === 'accepted') {
+                    console.log('✅ المستخدم وافق على التثبيت');
+                } else {
+                    console.log('❌ المستخدم رفض التثبيت');
+                }
+
+                deferredPrompt = null;
+                hideInstallButton();
+            }
+        }
+
+        // تهيئة البيانات المحلية
+        function initializeLocalData() {
+            console.log('📊 تهيئة البيانات المحلية...');
+
+            // إنشاء البيانات الافتراضية إذا لم تكن موجودة
+            if (!localStorage.getItem('tailorshop_services')) {
+                initializeDefaultServices();
+            }
+
+            if (!localStorage.getItem('tailorshop_orders')) {
+                initializeDefaultOrders();
+            }
+
+            // تحميل البيانات
+            loadData();
+
+            console.log('✅ تم تهيئة البيانات المحلية بنجاح');
+        }
+
+        // تهيئة الخدمات الافتراضية
+        function initializeDefaultServices() {
+            const defaultServices = [
+                {
+                    id: 1,
+                    name: 'خياطة ثوب رجالي',
+                    price: 150.0,
+                    description: 'خياطة ثوب رجالي عادي',
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 2,
+                    name: 'خياطة بدلة',
+                    price: 300.0,
+                    description: 'خياطة بدلة رسمية',
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 3,
+                    name: 'تعديل بنطلون',
+                    price: 25.0,
+                    description: 'تقصير أو توسيع بنطلون',
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 4,
+                    name: 'خياطة فستان',
+                    price: 200.0,
+                    description: 'خياطة فستان نسائي',
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 5,
+                    name: 'خياطة عباءة',
+                    price: 180.0,
+                    description: 'خياطة عباءة نسائية',
+                    createdAt: new Date().toISOString()
+                }
+            ];
+
+            localStorage.setItem('tailorshop_services', JSON.stringify(defaultServices));
+            console.log('✅ تم إنشاء الخدمات الافتراضية');
+        }
+
+        // تهيئة الطلبات الافتراضية
+        function initializeDefaultOrders() {
+            const defaultOrders = [
+                {
+                    id: 1,
+                    date: '2025-01-10',
+                    customer: 'أحمد محمد',
+                    service: 'خياطة ثوب رجالي',
+                    price: 150.0,
+                    paid: 100.0,
+                    notes: 'طلب عاجل',
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 2,
+                    date: '2025-01-09',
+                    customer: 'فاطمة أحمد',
+                    service: 'خياطة فستان',
+                    price: 200.0,
+                    paid: 200.0,
+                    notes: '',
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: 3,
+                    date: '2025-01-08',
+                    customer: 'محمد علي',
+                    service: 'خياطة بدلة',
+                    price: 300.0,
+                    paid: 150.0,
+                    notes: 'مقاس كبير',
+                    createdAt: new Date().toISOString()
+                }
+            ];
+
+            localStorage.setItem('tailorshop_orders', JSON.stringify(defaultOrders));
+            console.log('✅ تم إنشاء الطلبات الافتراضية');
+        }
+
+        // تحميل البيانات
+        function loadData() {
+            try {
+                const savedOrders = localStorage.getItem('tailorshop_orders');
+                const savedServices = localStorage.getItem('tailorshop_services');
+                const savedExpenses = localStorage.getItem('tailorshop_expenses');
+                const savedMeasurements = localStorage.getItem('tailorshop_measurements');
+
+                orders = savedOrders ? JSON.parse(savedOrders) : [];
+                services = savedServices ? JSON.parse(savedServices) : [];
+                expenses = savedExpenses ? JSON.parse(savedExpenses) : [];
+                measurements = savedMeasurements ? JSON.parse(savedMeasurements) : [];
+            } catch (error) {
+                console.error('خطأ في تحميل البيانات:', error);
+                orders = [];
+                services = [];
+                expenses = [];
+                measurements = [];
+            }
+        }
+
+        // حفظ البيانات
+        function saveData() {
+            try {
+                localStorage.setItem('tailorshop_orders', JSON.stringify(orders));
+                localStorage.setItem('tailorshop_services', JSON.stringify(services));
+                localStorage.setItem('tailorshop_expenses', JSON.stringify(expenses));
+                localStorage.setItem('tailorshop_measurements', JSON.stringify(measurements));
+                return true;
+            } catch (error) {
+                console.error('خطأ في حفظ البيانات:', error);
+                return false;
+            }
+        }
+
+        // التحقق من حالة تسجيل الدخول
+        function checkLoginStatus() {
+            const savedLogin = localStorage.getItem('tailorshop_isLoggedIn');
+            if (savedLogin === 'true') {
+                isLoggedIn = true;
+                showPage('dashboard-page');
+                updateDashboard();
+            } else {
+                showPage('login-page');
+            }
+        }
+
+        // معالجة تسجيل الدخول
+        function handleLogin(e) {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (username === 'admin' && password === '1234') {
+                isLoggedIn = true;
+                localStorage.setItem('tailorshop_isLoggedIn', 'true');
+                localStorage.setItem('tailorshop_username', username);
+
+                showToast('تم تسجيل الدخول بنجاح', 'success');
+                showPage('dashboard-page');
+                updateDashboard();
+            } else {
+                showToast('اسم المستخدم أو كلمة المرور غير صحيحة', 'error');
+            }
+        }
+
+        // تسجيل الخروج
+        function logout() {
+            isLoggedIn = false;
+            localStorage.removeItem('tailorshop_isLoggedIn');
+            localStorage.removeItem('tailorshop_username');
+
+            showToast('تم تسجيل الخروج بنجاح', 'success');
+            showPage('login-page');
+        }
+
+        // إظهار صفحة
+        function showPage(pageId) {
+            // إخفاء جميع الصفحات
+            const pages = document.querySelectorAll('.page');
+            pages.forEach(page => {
+                page.style.display = 'none';
+            });
+
+            // إظهار الصفحة المطلوبة
+            const targetPage = document.getElementById(pageId);
+            if (targetPage) {
+                targetPage.style.display = 'block';
+                currentPage = pageId;
+
+                // تحديث شريط التنقل
+                updateNavigation();
+
+                // تحديث محتوى الصفحة
+                updatePageContent(pageId);
+            }
+        }
+
+        // تحديث شريط التنقل
+        function updateNavigation() {
+            const navItems = document.querySelectorAll('.nav-item');
+            navItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.page === currentPage) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        // تحديث محتوى الصفحة
+        function updatePageContent(pageId) {
+            switch (pageId) {
+                case 'dashboard-page':
+                    updateDashboard();
+                    break;
+                case 'orders-page':
+                    updateOrdersList();
+                    break;
+                case 'services-page':
+                    updateServicesList();
+                    break;
+                case 'expenses-page':
+                    updateExpensesList();
+                    break;
+                case 'measurements-page':
+                    updateMeasurementsList();
+                    break;
+            }
+        }
+
+        // تحديث لوحة التحكم
+        function updateDashboard() {
+            const totalOrdersEl = document.getElementById('total-orders');
+            const totalServicesEl = document.getElementById('total-services');
+            const totalRevenueEl = document.getElementById('total-revenue');
+            const totalPaidEl = document.getElementById('total-paid');
+            const pendingAmountEl = document.getElementById('pending-amount');
+            const cashboxAmountEl = document.getElementById('cashbox-amount');
+
+            if (totalOrdersEl) totalOrdersEl.textContent = orders.length;
+            if (totalServicesEl) totalServicesEl.textContent = services.length;
+
+            // حساب الإيرادات والمدفوعات
+            const totalRevenue = orders.reduce((sum, order) => sum + order.price, 0);
+            const totalPaid = orders.reduce((sum, order) => sum + order.paid, 0);
+            const pendingAmount = orders.reduce((sum, order) => sum + (order.price - order.paid), 0);
+
+            // حساب المصاريف
+            const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+
+            // حساب رصيد الصندوق (المدفوع - المصاريف)
+            const cashboxAmount = totalPaid - totalExpenses;
+
+            // تحديث العرض
+            if (totalRevenueEl) totalRevenueEl.textContent = totalRevenue.toFixed(2) + ' شيكل';
+            if (totalPaidEl) totalPaidEl.textContent = totalPaid.toFixed(2) + ' شيكل';
+            if (pendingAmountEl) pendingAmountEl.textContent = pendingAmount.toFixed(2) + ' شيكل';
+            if (cashboxAmountEl) cashboxAmountEl.textContent = cashboxAmount.toFixed(2) + ' شيكل';
+        }
+
+        // تحديث قائمة الطلبات
+        function updateOrdersList() {
+            const ordersList = document.getElementById('orders-list');
+            if (!ordersList) return;
+
+            if (orders.length === 0) {
+                ordersList.innerHTML = '<div class="card"><p>لا توجد طلبات حتى الآن</p></div>';
+                return;
+            }
+
+            const ordersHtml = orders.map(order => `
+                <div class="order-item">
+                    <div class="item-header">
+                        <div class="item-title">${order.customer}</div>
+                        <div class="item-status ${order.paid >= order.price ? 'status-completed' : 'status-pending'}">
+                            ${order.paid >= order.price ? 'مدفوع' : 'معلق'}
+                        </div>
+                    </div>
+                    <div class="item-details">
+                        <p><strong>الخدمة:</strong> ${order.service}</p>
+                        <p><strong>السعر:</strong> ${order.price} شيكل</p>
+                        <p><strong>المدفوع:</strong> ${order.paid} شيكل</p>
+                        <p><strong>التاريخ:</strong> ${order.date}</p>
+                        ${order.notes ? `<p><strong>ملاحظات:</strong> ${order.notes}</p>` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            ordersList.innerHTML = ordersHtml;
+        }
+
+        // تحديث قائمة الخدمات
+        function updateServicesList() {
+            const servicesList = document.getElementById('services-list');
+            if (!servicesList) return;
+
+            if (services.length === 0) {
+                servicesList.innerHTML = '<div class="card"><p>لا توجد خدمات حتى الآن</p></div>';
+                return;
+            }
+
+            const servicesHtml = services.map(service => `
+                <div class="service-item">
+                    <div class="item-header">
+                        <div class="item-title">${service.name}</div>
+                        <div class="item-price">${service.price} شيكل</div>
+                    </div>
+                    <div class="item-details">
+                        ${service.description ? `<p>${service.description}</p>` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            servicesList.innerHTML = servicesHtml;
+
+            // تحديث قائمة الخدمات في نموذج الطلب
+            updateOrderServiceSelect();
+        }
+
+        // تحديث قائمة الخدمات في نموذج الطلب
+        function updateOrderServiceSelect() {
+            const serviceSelect = document.getElementById('order-service');
+            if (!serviceSelect) return;
+
+            serviceSelect.innerHTML = '<option value="">اختر الخدمة</option>';
+
+            services.forEach(service => {
+                const option = document.createElement('option');
+                option.value = service.name;
+                option.textContent = `${service.name} - ${service.price} شيكل`;
+                option.dataset.price = service.price;
+                serviceSelect.appendChild(option);
+            });
+
+            // تحديث السعر عند اختيار الخدمة
+            serviceSelect.addEventListener('change', function() {
+                const selectedOption = this.options[this.selectedIndex];
+                if (selectedOption.dataset.price) {
+                    const priceInput = document.getElementById('order-price');
+                    if (priceInput) {
+                        priceInput.value = selectedOption.dataset.price;
+                    }
+                }
+            });
+        }
+
+        // إظهار نافذة إضافة طلب
+        function showAddOrderModal() {
+            updateOrderServiceSelect();
+            showModal('add-order-modal');
+        }
+
+        // إظهار نافذة إضافة خدمة
+        function showAddServiceModal() {
+            showModal('add-service-modal');
+        }
+
+        // إظهار نافذة منبثقة
+        function showModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('show');
+            }
+        }
+
+        // إخفاء نافذة منبثقة
+        function hideModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('show');
+
+                // مسح النموذج
+                const form = modal.querySelector('form');
+                if (form) {
+                    form.reset();
+                }
+            }
+        }
+
+        // إضافة طلب جديد
+        function addOrder() {
+            const customer = document.getElementById('order-customer').value.trim();
+            const service = document.getElementById('order-service').value;
+            const price = parseFloat(document.getElementById('order-price').value);
+            const paid = parseFloat(document.getElementById('order-paid').value) || 0;
+            const notes = document.getElementById('order-notes').value.trim();
+
+            if (!customer || !service || !price) {
+                showToast('يرجى ملء جميع الحقول المطلوبة', 'error');
+                return;
+            }
+
+            const order = {
+                id: Date.now(),
+                date: new Date().toISOString().split('T')[0],
+                customer: customer,
+                service: service,
+                price: price,
+                paid: paid,
+                notes: notes,
+                createdAt: new Date().toISOString()
+            };
+
+            orders.push(order);
+            saveData();
+            hideModal('add-order-modal');
+            showToast('تم إضافة الطلب بنجاح', 'success');
+
+            // تحديث الواجهة
+            updatePageContent(currentPage);
+
+            // إطلاق حدث تغيير البيانات
+            window.dispatchEvent(new Event('dataChanged'));
+        }
+
+        // إضافة خدمة جديدة
+        function addService() {
+            const name = document.getElementById('service-name').value.trim();
+            const price = parseFloat(document.getElementById('service-price').value);
+            const description = document.getElementById('service-description').value.trim();
+
+            if (!name || !price) {
+                showToast('يرجى ملء جميع الحقول المطلوبة', 'error');
+                return;
+            }
+
+            // التحقق من عدم تكرار الاسم
+            if (services.some(service => service.name === name)) {
+                showToast('اسم الخدمة موجود مسبقاً', 'error');
+                return;
+            }
+
+            const service = {
+                id: Date.now(),
+                name: name,
+                price: price,
+                description: description,
+                createdAt: new Date().toISOString()
+            };
+
+            services.push(service);
+            saveData();
+            hideModal('add-service-modal');
+            showToast('تم إضافة الخدمة بنجاح', 'success');
+
+            // تحديث الواجهة
+            updatePageContent(currentPage);
+
+            // إطلاق حدث تغيير البيانات
+            window.dispatchEvent(new Event('dataChanged'));
+        }
+
+        // إظهار رسالة تنبيه
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            if (!toast) return;
+
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.classList.add('show');
+
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // تبديل القائمة (للاستخدام المستقبلي)
+        function toggleMenu() {
+            console.log('تبديل القائمة');
+        }
+
+        // تسجيل Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('sw.js')
+                    .then(function(registration) {
+                        console.log('✅ Service Worker مسجل بنجاح');
+                    })
+                    .catch(function(error) {
+                        console.log('❌ فشل تسجيل Service Worker:', error);
+                    });
+            });
+        }
+
+        // وظائف المصاريف والقياسات
+        function showAddExpenseModal() {
+            document.getElementById('expense-date').value = new Date().toISOString().split('T')[0];
+            showModal('add-expense-modal');
+        }
+
+        function showAddMeasurementModal() {
+            showModal('add-measurement-modal');
+        }
+
+        function updateExpensesList() {
+            const expensesList = document.getElementById('expenses-list');
+            if (!expensesList) return;
+
+            if (expenses.length === 0) {
+                expensesList.innerHTML = '<div class="card"><p>لا توجد مصاريف حتى الآن</p></div>';
+                return;
+            }
+
+            const expensesHtml = expenses.map(expense => {
+                const categoryNames = {
+                    'administrative': 'إداري',
+                    'operational': 'تشغيلي',
+                    'personal': 'شخصي'
+                };
+
+                return `
+                    <div class="order-item">
+                        <div class="item-header">
+                            <div class="item-title">${expense.description}</div>
+                            <div style="font-weight: bold; color: #f44336;">${expense.amount} شيكل</div>
+                        </div>
+                        <div class="item-details">
+                            <p><strong>التصنيف:</strong> ${categoryNames[expense.category] || expense.category}</p>
+                            <p><strong>التاريخ:</strong> ${expense.date}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            expensesList.innerHTML = expensesHtml;
+        }
+
+        function updateMeasurementsList() {
+            const measurementsList = document.getElementById('measurements-list');
+            if (!measurementsList) return;
+
+            if (measurements.length === 0) {
+                measurementsList.innerHTML = '<div class="card"><p>لا توجد قياسات حتى الآن</p></div>';
+                return;
+            }
+
+            const measurementsHtml = measurements.map(measurement => `
+                <div class="order-item">
+                    <div class="item-header">
+                        <div class="item-title">${measurement.customer}</div>
+                        <div style="color: #1976d2; font-weight: bold;">${measurement.phone || 'لا يوجد رقم'}</div>
+                    </div>
+                    <div class="item-details">
+                        <p><strong>آخر زيارة:</strong> ${measurement.lastVisit}</p>
+                        ${measurement.notes ? `<p><strong>ملاحظات:</strong> ${measurement.notes}</p>` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            measurementsList.innerHTML = measurementsHtml;
+        }
+
+        function addExpense() {
+            const category = document.getElementById('expense-category').value;
+            const description = document.getElementById('expense-description').value.trim();
+            const amount = parseFloat(document.getElementById('expense-amount').value);
+            const date = document.getElementById('expense-date').value;
+
+            if (!category || !description || !amount || !date) {
+                showToast('يرجى ملء جميع الحقول المطلوبة', 'error');
+                return;
+            }
+
+            const expense = {
+                id: Date.now(),
+                category: category,
+                description: description,
+                amount: amount,
+                date: date,
+                createdAt: new Date().toISOString()
+            };
+
+            expenses.push(expense);
+            saveData();
+            hideModal('add-expense-modal');
+            showToast('تم إضافة المصروف بنجاح', 'success');
+            updateExpensesList();
+        }
+
+        function addMeasurement() {
+            const customer = document.getElementById('measurement-customer').value.trim();
+            const phone = document.getElementById('measurement-phone').value.trim();
+            const notes = document.getElementById('measurement-notes').value.trim();
+
+            if (!customer) {
+                showToast('يرجى إدخال اسم العميل', 'error');
+                return;
+            }
+
+            const measurementData = {
+                height: document.getElementById('measurement-height').value.trim(),
+                weight: document.getElementById('measurement-weight').value.trim(),
+                shoulder: document.getElementById('measurement-shoulder').value.trim(),
+                chest: document.getElementById('measurement-chest').value.trim(),
+                waist: document.getElementById('measurement-waist').value.trim(),
+                hip: document.getElementById('measurement-hip').value.trim(),
+                sleeve: document.getElementById('measurement-sleeve').value.trim(),
+                pants: document.getElementById('measurement-pants').value.trim()
+            };
+
+            const measurement = {
+                id: Date.now(),
+                customer: customer,
+                phone: phone,
+                measurements: measurementData,
+                notes: notes,
+                lastVisit: new Date().toISOString().split('T')[0],
+                createdAt: new Date().toISOString()
+            };
+
+            measurements.push(measurement);
+            saveData();
+            hideModal('add-measurement-modal');
+            showToast('تم حفظ بيانات العميل بنجاح', 'success');
+            updateMeasurementsList();
+        }
+
+        console.log('📱 تطبيق مشغل الخياطة جاهز للعمل!');
+        console.log('✨ يعمل بدون إنترنت في أي مكان');
+        console.log('© 2025 - تصميم وبرمجة سامي جوابرة');
+    </script>
+</body>
+</html>

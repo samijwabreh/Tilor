@@ -1,0 +1,42 @@
+{
+  "name": "برنامج إدارة مشغل الخياطة",
+  "short_name": "مشغل الخياطة",
+  "description": "برنامج إدارة مشغل الخياطة - يعمل بدون إنترنت في أي مكان",
+  "start_url": "./تطبيق_يعمل_100%.html",
+  "display": "standalone",
+  "background_color": "#FAD4C0",
+  "theme_color": "#1976d2",
+  "orientation": "portrait-primary",
+  "scope": "./",
+  "lang": "ar",
+  "dir": "rtl",
+  "icons": [
+    {
+      "src": "icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity", "utilities"],
+  "shortcuts": [
+    {
+      "name": "طلب جديد",
+      "short_name": "طلب جديد",
+      "description": "إضافة طلب جديد بسرعة",
+      "url": "./index.html#new-order",
+      "icons": [
+        {
+          "src": "icons/icon-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
